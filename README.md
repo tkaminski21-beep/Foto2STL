@@ -4,6 +4,8 @@ Zdjęcie, kilka zdjęć albo sam opis → model gotowy do druku 3D. Lokalna i da
 
 ## Szybki start
 
+Rozpakuj paczkę i pracuj w jej folderze (tam, gdzie leżą `install.sh`, `start.sh` i podfolder `foto2stl/`). `start.sh` można potem wywołać z dowolnego miejsca, np. `bash ~/foto2stl/start.sh zdjecie.jpg -m relief`.
+
 **Windows:** uruchom `install.bat`, potem `start.bat` (otworzy się przeglądarka).
 **Linux / macOS:** `bash install.sh`, potem `bash start.sh`.
 **Raspberry Pi / uConsole:** `bash install.sh --pi`, potem `bash start.sh --server` albo `bash start.sh` (szczegóły niżej).

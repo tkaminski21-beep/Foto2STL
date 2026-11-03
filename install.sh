@@ -5,9 +5,13 @@
 set -e
 cd "$(dirname "$0")"
 PY=${PYTHON:-python3}
+if [ ! -f foto2stl/__init__.py ] || [ ! -f requirements.txt ]; then
+  echo "W $(pwd) brakuje folderu foto2stl/ albo requirements.txt — uruchom install.sh z rozpakowanego folderu projektu."
+  exit 1
+fi
 
 if ! $PY -c 'import sys; sys.exit(sys.version_info < (3, 10))' 2>/dev/null; then
-  echo "Potrzebny Python 3.10 lub nowszy (jest: $($PY --version 2>&1)). Inny interpreter: PYTHON=python3.11 ./install.sh"
+  echo "Potrzebny Python 3.10 lub nowszy (jest: $($PY --version 2>&1)). Inny interpreter: PYTHON=python3.11 bash install.sh"
   exit 1
 fi
 if ! $PY -m venv .venv || [ ! -f .venv/bin/activate ]; then
@@ -48,4 +52,4 @@ if [ "$1" != "--pi" ] && [ "$TORCH_OK" = 1 ] && [ ! -d TripoSR ]; then
   fi
 fi
 chmod +x start.sh install.sh 2>/dev/null || true
-echo "Gotowe. Start: bash start.sh   (serwer w sieci: bash start.sh --server)"
+echo "Gotowe. Start: bash $(pwd)/start.sh zdjecie.jpg -m relief   (GUI: bash $(pwd)/start.sh, serwer: --server)"

@@ -4,6 +4,7 @@
 - `install.sh`: gdy `download.pytorch.org` jest niedostępny, torch instaluje się z PyPI (wcześniej instalacja przerywała się na x86_64).
 - `install.sh`: czytelny komunikat, gdy brakuje `python3-venv` (częste na czystym Debianie/uConsole), sprawdzenie wersji Pythona (≥ 3.10), ostrzeżenie dla 32-bitowego ARM zamiast przerwania.
 - W paczce `install.sh`/`start.sh` nie miały prawa wykonywania → `./install.sh` dawało „Permission denied”. README używa teraz `bash install.sh`, a skrypty mają ustawione `+x`.
+- `start.sh`/`foto2stl.py`/`install.sh` uruchomione poza folderem projektu dawały `ModuleNotFoundError: 'foto2stl' is not a package` — teraz mówią wprost, czego brakuje (folderu `foto2stl/` albo `.venv`). `start.sh` nie zmienia już katalogu, więc działa z dowolnego miejsca, a ścieżki zdjęć liczą się względem bieżącego katalogu.
 - `install.bat`: to samo zapasowe źródło torcha (nieprzetestowane — brak Windowsa).
 - Sprawdzone: wszystkie zależności mają gotowe paczki dla ARM64 (Python 3.11 i 3.13) — na uConsole nic się nie kompiluje.
 
