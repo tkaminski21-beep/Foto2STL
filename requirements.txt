@@ -1,0 +1,35 @@
+# torch instaluj osobno (patrz README / skrypty install), resztę: pip install -r requirements.txt
+
+# rdzeń: siatki, kształty, booleany, eksport
+numpy
+pillow
+trimesh>=4.0
+scikit-image
+scipy
+networkx
+shapely
+mapbox-earcut
+manifold3d
+rtree
+fast-simplification
+matplotlib
+
+# GUI, serwer, chmura, drukarka, MQTT
+gradio>=4.0
+gradio_client
+fastapi
+uvicorn
+python-multipart
+requests
+paho-mqtt
+
+# AI lokalnie: relief (Depth Anything V2) + usuwanie tła
+transformers>=4.45
+rembg
+onnxruntime
+
+# AI lokalnie: pełne 3D (TripoSR)
+omegaconf
+einops
+huggingface-hub
+imageio

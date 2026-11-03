@@ -1,0 +1,20 @@
+# Raspberry Pi / serwer domowy jako usługa systemd:
+#   sudo cp foto2stl.service /etc/systemd/system/ && sudo systemctl enable --now foto2stl
+# Popraw User i ścieżki, jeśli projekt leży gdzie indziej.
+[Unit]
+Description=Foto2STL - serwer zdjecie->STL
+After=network-online.target mosquitto.service
+Wants=network-online.target
+
+[Service]
+User=pi
+WorkingDirectory=/home/pi/foto2stl
+Environment=FOTO2STL_MQTT=localhost
+# Environment=HF_TOKEN=hf_xxx   (opcjonalnie: większy limit darmowego GPU w chmurze)
+ExecStart=/home/pi/foto2stl/.venv/bin/python foto2stl.py --server --port 7860 \
+          --watch /home/pi/foto2stl-inbox --mode relief --engine hunyuan3d --res 300
+Restart=on-failure
+Nice=5
+
+[Install]
+WantedBy=multi-user.target
