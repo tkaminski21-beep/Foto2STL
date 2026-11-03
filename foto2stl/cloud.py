@@ -23,9 +23,13 @@ ENGINES = {
     "hunyuan3d": dict(space="tencent/Hunyuan3D-2", api="/shape_generation",
                       image="image", set={"check_box_rembg": True, "randomize_seed": True,
                                           "octree_resolution": 256, "steps": 30}),
+    # Space uruchamia /generation_all tylko z działającym generatorem tekstur. Gdy go wyłączy
+    # („Texture Generation (Unavailable)”, przycisk „Gen Textured Shape” ukryty), endpoint dalej jest
+    # w API, ale po wygenerowaniu kształtu kończy się błędem — wtedy przechodzimy na sam kształt.
     "hunyuan3d-color": dict(space="tencent/Hunyuan3D-2", api="/generation_all",
                             image="image", set={"check_box_rembg": True, "randomize_seed": True,
-                                                "octree_resolution": 256, "steps": 30}, colored=True),
+                                                "octree_resolution": 256, "steps": 30}, colored=True,
+                            fallback="hunyuan3d"),
     "hunyuan3d-mv": dict(space="tencent/Hunyuan3D-2mv", api="/shape_generation",
                          views={"front": "mv_image_front", "back": "mv_image_back",
                                 "left": "mv_image_left", "right": "mv_image_right"},
@@ -46,27 +50,59 @@ def _client(space: str, token: str | None = None):
     from gradio_client import Client
     token = token or os.environ.get("HF_TOKEN")
     try:
-        return Client(space, token=token, verbose=False)
-    except TypeError:  # starsze gradio_client
-        return Client(space, hf_token=token)
+        try:
+            return Client(space, token=token, verbose=False)
+        except TypeError:  # starsze gradio_client
+            return Client(space, hf_token=token)
+    except Exception as e:  # noqa: BLE001 — brak sieci, Space uśpiony/usunięty, zablokowany huggingface.co
+        where = space if space.startswith("http") else f"https://huggingface.co/spaces/{space}"
+        raise RuntimeError(f"Nie mogę połączyć się ze Space'em {space} ({type(e).__name__}: {e}). "
+                           f"Sprawdź internet i czy Space działa: {where} — darmowe Space'y bywają "
+                           "uśpione, wstrzymane albo przeniesione.") from e
+
+
+def hidden_endpoints(c) -> set:
+    """Endpointy, których wszystkie przyciski są ukryte w interfejsie Space'a — tak autorzy wyłączają
+    funkcję (np. Hunyuan3D-2 bez tekstur ukrywa „Gen Textured Shape”), choć endpoint dalej jest w API."""
+    cfg = getattr(c, "config", None) or {}
+    comps = {x.get("id"): x for x in cfg.get("components", [])}
+    hidden = set()
+    for d in cfg.get("dependencies", []):
+        name = d.get("api_name")
+        if not isinstance(name, str):
+            continue
+        ids = [t[0] if isinstance(t, (list, tuple)) else t for t in (d.get("targets") or [])]
+        buttons = [comps[i] for i in ids if i in comps and comps[i].get("type") == "button"]
+        if buttons and all((b.get("props") or {}).get("visible") is False for b in buttons):
+            hidden.add("/" + name.lstrip("/"))
+    return hidden
+
+
+def _short(v) -> str:
+    return repr(v) if v is None or isinstance(v, (bool, int, float)) or (isinstance(v, str) and len(v) <= 20) \
+        else "…"
 
 
 def describe_api(space: str, token=None) -> str:
     c = _client(space, token)
     info = c.view_api(print_info=False, return_format="dict")
+    hidden = hidden_endpoints(c)
     lines = [f"Space: {space}"]
     for name, ep in (info.get("named_endpoints") or {}).items():
-        params = ", ".join(f"{p.get('parameter_name') or p.get('label')}"
-                           f"{'' if p.get('parameter_has_default') else '*'}" for p in ep.get("parameters", []))
-        lines.append(f"  {name}({params})")
-    lines.append("(* = wymagany)")
+        params = ", ".join(
+            f"{p.get('parameter_name') or p.get('label')}"
+            + (f"={_short(p.get('parameter_default'))}" if p.get("parameter_has_default") else "*")
+            for p in ep.get("parameters", []))
+        note = "   ← przycisk ukryty w interfejsie: funkcja zapewne wyłączona" if name in hidden else ""
+        lines.append(f"  {name}({params}){note}")
+    lines.append("(* = wymagany; profile silników: foto2stl/cloud.py → ENGINES)")
     return "\n".join(lines)
 
 
-def call_space(space: str, api: str, values: dict, token=None):
+def call_space(space: str, api: str, values: dict, token=None, client=None):
     """Wywołuje endpoint, dopasowując podane wartości do jego parametrów."""
     from gradio_client import handle_file
-    c = _client(space, token)
+    c = client or _client(space, token)
     info = c.view_api(print_info=False, return_format="dict")
     eps = info.get("named_endpoints") or {}
     if api not in eps:
@@ -83,7 +119,15 @@ def call_space(space: str, api: str, values: dict, token=None):
         elif not p.get("parameter_has_default"):
             kwargs[name] = None
     log(f"Chmura: {space} {api} (czekam na kolejkę GPU…)")
-    return c.predict(api_name=api, **kwargs)
+    try:
+        return c.predict(api_name=api, **kwargs)
+    except Exception as e:  # noqa: BLE001
+        msg = (str(e) or type(e).__name__).rstrip(". ")
+        hint = (" Wyczerpany darmowy limit GPU — podaj token HF (--hf-token albo HF_TOKEN) lub spróbuj później."
+                if "quota" in msg.lower() else
+                " Space zgłosił wewnętrzny błąd (bywa: przeciążenie, awaria, zmienione API — sprawdź "
+                f"foto2stl --cloud-api {space}).")
+        raise RuntimeError(f"Space {space} {api}: {msg}.{hint}") from e
 
 
 def find_files(obj, exts) -> list[str]:
@@ -139,7 +183,19 @@ def image_to_3d(images: dict, engine: str = "hunyuan3d", token=None, space=None,
             raise ValueError("Tryb wielu widoków wymaga co najmniej zdjęcia z przodu.")
     else:
         values[prof["image"]] = images.get("image") or images.get("front")
-    result = call_space(prof["space"], prof["api"], values, token)
+    client = _client(prof["space"], token)
+    fallback = ENGINES.get(prof.get("fallback", ""))
+    if fallback and prof["api"] in hidden_endpoints(client):
+        log(f"Space {prof['space']} ma wyłączone tekstury ({prof['api']} ukryty) — generuję sam kształt, bez koloru.")
+        prof = fallback
+    try:
+        result = call_space(prof["space"], prof["api"], values, token, client)
+    except RuntimeError as e:
+        if not (fallback and prof is not fallback):
+            raise
+        log(f"Generowanie z teksturą nie powiodło się ({e}) — ponawiam: sam kształt, bez koloru.")
+        prof = fallback
+        result = call_space(prof["space"], prof["api"], values, token, client)
     files = find_files(result, MESH_EXT)
     if not files:
         raise RuntimeError(f"Space nie zwrócił pliku 3D (odpowiedź: {str(result)[:300]})")

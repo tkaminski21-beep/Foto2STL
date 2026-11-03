@@ -5,8 +5,8 @@ Zdjęcie, kilka zdjęć albo sam opis → model gotowy do druku 3D. Lokalna i da
 ## Szybki start
 
 **Windows:** uruchom `install.bat`, potem `start.bat` (otworzy się przeglądarka).
-**Linux / macOS:** `./install.sh`, potem `./start.sh`.
-**Raspberry Pi:** `./install.sh --pi`, potem `./start.sh --server` (szczegóły niżej).
+**Linux / macOS:** `bash install.sh`, potem `bash start.sh`.
+**Raspberry Pi / uConsole:** `bash install.sh --pi`, potem `bash start.sh --server` albo `bash start.sh` (szczegóły niżej).
 
 Bez instalacji Pythona: `python build_exe.py --lite` zbuduje folder z `Foto2STL.exe` (dwuklik = GUI).
 
@@ -63,8 +63,8 @@ python foto2stl.py --help        # wszystkie opcje
 ## Serwer na Raspberry Pi
 
 ```bash
-./install.sh --pi
-./start.sh --server --watch ~/foto2stl-inbox --mqtt localhost --engine hunyuan3d
+bash install.sh --pi
+bash start.sh --server --watch ~/foto2stl-inbox --mqtt localhost --engine hunyuan3d
 ```
 
 - GUI w sieci: `http://<adres-pi>:7860`
@@ -74,7 +74,11 @@ python foto2stl.py --help        # wszystkie opcje
 - katalog obserwowany: wrzuć zdjęcie (scp, Syncthing, Samba) do `~/foto2stl-inbox`, a STL pojawi się w `wyniki/`. Plik `.txt` z opisem uruchamia tryb text3d.
 - autostart: `foto2stl.service` (instrukcja w środku pliku). MQTT publikuje na `foto2stl/done` JSON z nazwami plików i raportem.
 
-Na Pi 4 sensownie działają tryby płaskie i silniki chmurowe. Lokalny TripoSR jest za ciężki.
+Na Pi 4 i uConsole (CM4) sensownie działają tryby płaskie, relief i silniki chmurowe. Lokalny TripoSR potrzebuje ok. 4 GB RAM przy `--mc-res 128` i 5 GB przy domyślnym 256 (zmierzone na CPU), a na Cortex-A72 liczy kilka minut — z modułem 4 GB tylko z `--mc-res 128` i swapem, lepiej `--engine hunyuan3d`.
+
+- System musi być 64-bitowy (`uname -m` → `aarch64`); na czystym Debianie najpierw `sudo apt install python3-venv python3-dev git`.
+- Usuwanie tła (rembg) domyślnie używa `u2net` (176 MB). Najlżejszy: `--rembg-model u2netp` (5 MB). Pierwsze uruchomienie rembg kompiluje moduły (numba) — na ARM potrafi to trwać kilka minut, potem już nie.
+- Opcje podane przy `--server` (np. `--engine`, `--hf-token`, `--mqtt`, `--depth-model`) obowiązują też w GUI; ustawienia wybrane w interfejsie mają pierwszeństwo.
 
 ## Dobre zdjęcia do 3D
 - jeden obiekt, cały w kadrze, lekko z góry (15–30°), jednolite tło, rozproszone światło
@@ -83,7 +87,8 @@ Na Pi 4 sensownie działają tryby płaskie i silniki chmurowe. Lokalny TripoSR 
 - kontrola wycięcia tła dla TripoSR: `--debug-dir .`
 
 ## Rozwiązywanie problemów
-- **Silnik chmurowy zwraca błąd endpointu**: autorzy Space'a zmienili API. Sprawdź `python foto2stl.py --cloud-api tencent/Hunyuan3D-2` i dopasuj (`--space`, `--space-api`, `--space-image-param` działają z dowolnym Space'em image→3D).
-- **`transformers` a TripoSR**: TripoSR był pisany pod `transformers==4.35`. Jeśli `full3d` lokalnie rzuca błędem, zrób osobne venv z tą wersją albo użyj silnika chmurowego.
+- **Silnik chmurowy zwraca błąd endpointu**: autorzy Space'a zmienili API. Sprawdź `python foto2stl.py --cloud-api tencent/Hunyuan3D-2` (pokazuje parametry z wartościami domyślnymi i oznacza endpointy, których przycisk jest ukryty w interfejsie) i dopasuj profil w `foto2stl/cloud.py` → `ENGINES` albo flagami `--space`, `--space-api`, `--space-image-param` (działają z dowolnym Space'em image→3D).
+- **Kolor z Hunyuan3D-2 (`--color` / `hunyuan3d-color`)**: publiczny Space ma obecnie wyłączone generowanie tekstur („Texture Generation (Unavailable)”). Program wykrywa to (albo błąd tekstur) i generuje sam kształt, bez koloru, zamiast tracić limit GPU.
+- **`transformers` a TripoSR**: TripoSR był pisany pod `transformers==4.35`, a transformers 5 zmienił nazwy wag enkodera ViT. Foto2STL tłumaczy je przy wczytywaniu, więc działa z obiema wersjami; gdyby kolejna wersja znów coś zmieniła, komunikat podpowie `pip install "transformers<5"`.
 - **Malowanie 3MF** jest odczytywane przez PrusaSlicer, OrcaSlicer i Bambu Studio. Gdyby kolory się nie pojawiły, wczytaj GLB albo użyj wielu części.
 - **Licencje**: TripoSR (MIT), Depth Anything V2 Small (Apache-2.0); większe warianty Depth Anything i modele w Space'ach mają własne licencje, sprawdź przed użyciem komercyjnym.

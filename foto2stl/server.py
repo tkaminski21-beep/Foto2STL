@@ -73,7 +73,7 @@ def make_app(base_opts: dict):
     def health():
         return {"ok": True, "busy": LOCK.locked()}
 
-    ui = build_ui()
+    ui = build_ui(base_opts)
     kw = dict(css=CSS, theme=gr.themes.Soft()) if _gr_major() >= 6 else {}
     try:
         app = gr.mount_gradio_app(app, ui.queue(), path="/", **kw)

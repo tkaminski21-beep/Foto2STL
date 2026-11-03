@@ -17,7 +17,7 @@ def build_height(img, mode, o):
         from .ai_local import estimate_depth
         depth = estimate_depth(img, o["depth_model"], o["device"])
         if need_mask:
-            mask = rembg_mask(img)
+            mask = rembg_mask(img, o.get("rembg_model", "u2net"))
         h = normalize(depth, mask=mask)
         if mask is not None and o.get("remove_bg"):
             h = h * smooth_height(mask, 1.5)

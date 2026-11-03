@@ -34,6 +34,8 @@ HELP = {
     "printer_url": "adres OctoPrint/Moonraker", "printer_kind": "octoprint | moonraker",
     "mqtt": "host brokera MQTT do powiadomień", "hf_token": "token Hugging Face (większy limit GPU)",
     "space": "własny Space HF (owner/nazwa) dla trybu chmurowego",
+    "depth_model": "model głębi (id z Hugging Face albo lokalny katalog)",
+    "rembg_model": "model usuwania tła: u2net | u2netp (najlżejszy, Pi/uConsole) | isnet-general-use | birefnet-general",
 }
 
 
@@ -83,7 +85,11 @@ def main(argv=None):
 
     if a.cloud_api:
         from .cloud import describe_api
-        print(describe_api(a.cloud_api, opts.get("hf_token")))
+        try:
+            print(describe_api(a.cloud_api, opts.get("hf_token")))
+        except Exception as e:  # noqa: BLE001
+            log(f"BŁĄD: {e}")
+            sys.exit(1)
         return
     if a.history:
         from .history import entries
@@ -95,7 +101,7 @@ def main(argv=None):
         return serve(a.host or "0.0.0.0", a.port, opts, a.watch, a.watch_out, a.mode)
     if a.gui:
         from .gui import run_gui
-        return run_gui(a.host or "127.0.0.1", a.port, a.share)
+        return run_gui(a.host or "127.0.0.1", a.port, a.share, opts)
     if a.watch:
         from .server import watch_folder
         return watch_folder(a.watch, a.watch_out, a.mode, opts)

@@ -22,7 +22,7 @@ DEFAULTS = dict(
     rotate_x=0.0, rotate_y=0.0, rotate_z=0.0, save_history=True,
     # płaskie
     width_mm=100.0, base_mm=2.0, relief_mm=6.0, res=400, smooth=0.8, gamma=1.0, invert=False,
-    remove_bg=False, depth_model="depth-anything/Depth-Anything-V2-Small-hf", shape="rect",
+    remove_bg=False, depth_model="depth-anything/Depth-Anything-V2-Small-hf", rembg_model="u2net", shape="rect",
     contour_margin_mm=2.0, frame_mm=0.0, keychain=False, ring_mm=5.0, hole_mm=4.0, back_text="",
     text_mm=6.0, engrave_mm=0.6,
     # litofan

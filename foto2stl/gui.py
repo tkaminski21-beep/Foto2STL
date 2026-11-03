@@ -30,9 +30,12 @@ def _gr_major():
     return int(gr.__version__.split(".")[0])
 
 
-def build_ui():
+def build_ui(base_opts=None):
+    """base_opts: opcje z wiersza poleceń (np. --engine, --hf-token, --depth-model, --mqtt) — obowiązują
+    w GUI tak jak w REST; to, co użytkownik ustawi w interfejsie, ma pierwszeństwo."""
     import gradio as gr
 
+    base = {k: v for k, v in (base_opts or {}).items() if v is not None}
     S = {}  # ustawienia wspólne dla wszystkich zakładek
     bkw = {} if _gr_major() >= 6 else dict(css=CSS, theme=gr.themes.Soft())
 
@@ -95,7 +98,9 @@ def build_ui():
                         S["max_mm"] = gr.Slider(1.5, 6, 3.0, step=0.1, label="Maks. grubość [mm]")
                     S["arc_deg"] = gr.Slider(30, 300, 120, step=5, label="Kąt wygięcia [°]")
                 with gr.Accordion("Model 3D i druk", open=False):
-                    S["engine"] = gr.Dropdown(ENGINE_CHOICES, value="local", label="Silnik 3D")
+                    engines = [v for _, v in ENGINE_CHOICES]
+                    S["engine"] = gr.Dropdown(ENGINE_CHOICES, label="Silnik 3D",
+                                              value=base.get("engine") if base.get("engine") in engines else "local")
                     with gr.Row():
                         S["mc_res"] = gr.Slider(128, 384, 256, step=32, label="Szczegółowość (lokalnie)")
                         S["smooth_iters"] = gr.Slider(0, 30, 5, step=1, label="Wygładzanie")
@@ -137,8 +142,8 @@ def build_ui():
             kw = dict(zip(keys, vals))
             kw["formats"] = ",".join(["stl"] + list(kw.get("formats") or []))
             for k in ("slicer_config", "slicer_filament", "printer_url", "printer_key"):
-                kw[k] = kw.get(k) or None
-            return options(**kw)
+                kw[k] = kw.get(k) or base.get(k)
+            return options(**{**base, **kw})
 
         def job(mode, inputs, vals):
             if not LOCK.acquire(timeout=1):
@@ -192,9 +197,9 @@ def build_ui():
     return ui
 
 
-def run_gui(host="127.0.0.1", port=7860, share=False):
+def run_gui(host="127.0.0.1", port=7860, share=False, base_opts=None):
     import gradio as gr
-    ui = build_ui()
+    ui = build_ui(base_opts)
     kw = dict(server_name=host, server_port=port, share=share, inbrowser=host in ("127.0.0.1", "localhost"))
     if _gr_major() >= 6:
         kw.update(css=CSS, theme=gr.themes.Soft())

@@ -64,19 +64,28 @@ def smooth_height(h: np.ndarray, sigma: float) -> np.ndarray:
     return gaussian(h, sigma=sigma, preserve_range=True).astype(np.float32)
 
 
-_REMBG = None
+_REMBG = {}
 
 
-def rembg_mask(img: Image.Image) -> np.ndarray:
+def rembg_session(model: str = "u2net"):
+    """Sesja rembg z jawnie wybranym modelem. Od rembg 2.0.7x domyślny jest 'bria-rmbg'
+    (1 GB, licencja niekomercyjna) — za ciężki dla Raspberry Pi / uConsole, więc podajemy własny:
+    u2net (176 MB, domyślny), u2netp (5 MB, najszybszy), isnet-general-use, birefnet-general…"""
+    model = model or "u2net"
+    if model not in _REMBG:
+        # pierwszy import rembg kompiluje pymatting (numba) — na ARM potrafi to trwać kilka minut
+        log(f"Ładuję model usuwania tła (rembg: {model})…")
+        import rembg
+        _REMBG[model] = rembg.new_session(model)
+    return _REMBG[model]
+
+
+def rembg_mask(img: Image.Image, model: str = "u2net") -> np.ndarray:
     """Maska obiektu 0..1. Jeśli PNG ma już przezroczystość — używa jej zamiast AI."""
     if has_alpha(img):
         return np.asarray(img.split()[-1], dtype=np.float32) / 255.0
-    global _REMBG
     import rembg
-    if _REMBG is None:
-        log("Ładuję model usuwania tła (rembg)…")
-        _REMBG = rembg.new_session()
-    out = rembg.remove(img.convert("RGB"), session=_REMBG)
+    out = rembg.remove(img.convert("RGB"), session=rembg_session(model))
     return np.asarray(out.split()[-1], dtype=np.float32) / 255.0
 
 
