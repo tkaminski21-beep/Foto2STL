@@ -76,7 +76,9 @@ def _ram_gb():
 
 
 def default_triposr_dir() -> str:
-    return os.environ.get("TRIPOSR_DIR", str(Path(__file__).resolve().parent.parent / "TripoSR"))
+    # w wersji .exe (PyInstaller) TripoSR leży obok Foto2STL.exe, a nie obok kodu w _internal
+    base = Path(sys.executable).parent if getattr(sys, "frozen", False) else Path(__file__).resolve().parent.parent
+    return os.environ.get("TRIPOSR_DIR", str(base / "TripoSR"))
 
 
 TRIPOSR_REPO = "stabilityai/TripoSR"

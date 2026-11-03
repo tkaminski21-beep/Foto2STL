@@ -3,6 +3,10 @@
 import os
 import sys
 
+if getattr(sys, "frozen", False):
+    # wersja .exe: numba (rembg → pymatting) nie może zapisywać skompilowanych funkcji obok kodu
+    os.environ.setdefault("NUMBA_CACHE_DIR", os.path.join(os.path.expanduser("~"), ".foto2stl", "numba"))
+
 _here = os.path.dirname(os.path.abspath(__file__))
 if not getattr(sys, "frozen", False) and not os.path.isfile(os.path.join(_here, "foto2stl", "__init__.py")):
     sys.exit(f"Foto2STL: obok {os.path.abspath(__file__)} brakuje folderu foto2stl/ z kodem programu.\n"

@@ -2,3 +2,6 @@
 TripoSR/
 __pycache__/
 *.pyc
+build/
+dist/
+*.spec
