@@ -10,7 +10,16 @@ Rozpakuj paczkę i pracuj w jej folderze (tam, gdzie leżą `install.sh`, `start
 **Linux / macOS:** `bash install.sh`, potem `bash start.sh`.
 **Raspberry Pi / uConsole:** `bash install.sh --pi`, potem `bash start.sh --server` albo `bash start.sh` (szczegóły niżej).
 
-Bez instalacji Pythona: `python build_exe.py --lite` zbuduje folder z `Foto2STL.exe` (dwuklik = GUI).
+### Wersja .exe na Windows (bez Pythona na docelowym komputerze)
+
+Po `install.bat`, w folderze projektu:
+
+```bat
+.venv\Scripts\python build_exe.py          :: pełna: lokalne AI (TripoSR, relief) — kilka GB
+.venv\Scripts\python build_exe.py --lite   :: lekka: tryby płaskie + chmura — ok. 400 MB
+```
+
+Wynik: folder `dist\Foto2STL` z `Foto2STL.exe` (dwuklik = GUI w przeglądarce, z wiersza poleceń działa jak `foto2stl.py`). W pełnej wersji folder `TripoSR` jest kopiowany obok exe automatycznie. Cały folder `dist\Foto2STL` można przenieść na inny komputer; wagi modeli pobierają się przy pierwszym użyciu do `%USERPROFILE%\.cache\huggingface`.
 
 ## Co potrafi
 
