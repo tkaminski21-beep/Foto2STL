@@ -27,5 +27,9 @@
 ## GUI / serwer
 - Opcje z wiersza poleceń (`--engine`, `--hf-token`, `--mqtt`, `--depth-model`, `--rembg-model`…) obowiązują teraz też w GUI (wcześniej tylko w REST i katalogu obserwowanym); ustawienia z interfejsu mają pierwszeństwo.
 
-## Domyślna skala
-- Domyślna wysokość modeli 3D (`--height-mm`, suwak w GUI) to teraz **33 mm** — standardowa skala modelarska (wcześniej 80 mm).
+## Podstawka modelarska
+- Każdy model 3D dostaje domyślnie **okrągłą podstawkę Ø32 mm** (standard gier bitewnych) o grubości 3,5 mm ze sfazowaną krawędzią. Figurka jest skalowana tak, żeby z góry mieściła się na niej w całości.
+- `--round-base-mm 25` / `40` / `50`… zmienia średnicę, `--round-base-mm 0` wyłącza podstawkę (wtedy domyślna wysokość 80 mm jak wcześniej).
+- `--height-mm` nadal działa; jeśli figurka nie mieści się wtedy na podstawce, ta rośnie do najbliższego standardu (40, 50, 60, 80, 100… mm).
+- `--pedestal` / `--pedestal-text` dają jak dawniej prostokątną podstawkę (napis nie zmieści się na krążku 32 mm).
+- Przy podstawce `--auto-orient` jest pomijane — podstawka musi zostać na dole.

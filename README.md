@@ -36,7 +36,7 @@ Chmura używa darmowych GPU na Hugging Face Spaces. Bywają kolejki i dzienny li
 
 ### Przygotowanie do druku (model 3D)
 - naprawa siatki, usuwanie odłamków, wygładzanie, skalowanie do wysokości w mm
-- ścięcie spodu na płaską podstawę (`--base-cut-mm`) albo podstawka z napisem (`--pedestal-text "Tomasz 2026"`)
+- **okrągła podstawka modelarska Ø32 mm** dodawana domyślnie, figurka dopasowana do jej rozmiaru (`--round-base-mm 25|32|40|50…`, `0` = bez podstawki); zamiast niej prostokątna podstawka z napisem (`--pedestal-text "Dla Ani"`) albo ścięcie spodu na płasko (`--base-cut-mm`)
 - **wydrążanie** z zadaną grubością ścianki i otworem odpływowym w najniższym punkcie wnęki (`--hollow-mm 2 --drain-mm 4`)
 - **automatyczna orientacja** minimalizująca nawisy i podpory (`--auto-orient`)
 - **podział** dużych modeli na części mieszczące się na stole, z otworami na kołki i gotowym kołkiem do druku (`--split --bed-x 220 --bed-y 220 --bed-z 250`)

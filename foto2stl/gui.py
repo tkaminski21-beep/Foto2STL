@@ -77,7 +77,8 @@ def build_ui(base_opts=None):
 
                 with gr.Accordion("Rozmiar i kształt", open=True):
                     S["width_mm"] = gr.Slider(10, 300, 100, step=1, label="Szerokość – tryby płaskie / obwód cylindra [mm]")
-                    S["height_mm"] = gr.Slider(10, 400, 33, step=1, label="Wysokość modelu 3D [mm] (33 = skala modelarska)")
+                    S["height_mm"] = gr.Slider(0, 400, 0, step=1, label="Wysokość modelu 3D [mm] (0 = dopasuj do podstawki)")
+                    S["round_base_mm"] = gr.Dropdown([("Okrągła Ø25 mm", 25), ("Okrągła Ø32 mm (standard)", 32), ("Okrągła Ø40 mm", 40), ("Okrągła Ø50 mm", 50), ("Okrągła Ø60 mm", 60), ("Bez podstawki", 0)], value=32, label="Podstawka modelarska pod model 3D")
                     S["shape"] = gr.Dropdown(SHAPES, value="rect", label="Kształt płaskorzeźby / litofanu")
                     with gr.Row():
                         S["relief_mm"] = gr.Slider(0.5, 30, 6, step=0.5, label="Głębokość reliefu [mm]")
@@ -90,7 +91,7 @@ def build_ui(base_opts=None):
                     S["keychain"] = gr.Checkbox(False, label="Zrób brelok (oczko na kółko)")
                     S["back_text"] = gr.Textbox(value="", label="Napis grawerowany na spodzie")
                     S["pedestal_text"] = gr.Textbox(value="", label="Podstawka z napisem pod model 3D (pusty = bez napisu)")
-                    S["pedestal"] = gr.Checkbox(False, label="Dodaj podstawkę pod model 3D")
+                    S["pedestal"] = gr.Checkbox(False, label="Prostokątna podstawka zamiast okrągłej")
                 with gr.Accordion("Litofan", open=False):
                     S["litho"] = gr.Radio(LITHO, value="flat", label="Rodzaj")
                     with gr.Row():

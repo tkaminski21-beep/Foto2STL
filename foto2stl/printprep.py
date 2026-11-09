@@ -170,6 +170,48 @@ def auto_orient(mesh: trimesh.Trimesh, xf: Xf, overhang_deg=45.0, max_candidates
 
 # ─────────────────────── podstawka z napisem ───────────────────────
 
+# Standardowe okrągłe podstawki w grach bitewnych / modelarstwie [mm]
+ROUND_BASES = (25, 28, 32, 40, 50, 60, 80, 100, 130, 160)
+
+
+def footprint_radius(mesh) -> float:
+    """Promień okręgu wokół środka obrysu XY, w którym mieści się cały model (widok z góry)."""
+    v = mesh.vertices[:, :2]
+    c = (v.min(0) + v.max(0)) / 2
+    return float(np.sqrt(((v - c) ** 2).sum(1)).max())
+
+
+def fit_to_round_base(mesh, xf: Xf, diameter: float, margin: float = 0.92):
+    """Skaluje model tak, żeby z góry mieścił się w całości na okrągłej podstawce o średnicy diameter."""
+    r = footprint_radius(mesh)
+    if r > 0:
+        xf.apply(mesh, trimesh.transformations.scale_matrix(diameter / 2 * margin / r))
+    return mesh
+
+
+def add_round_base(mesh, diameter=32.0, height_mm=3.5, bevel_mm=0.8):
+    """Okrągła podstawka modelarska pod modelem (model musi już stać na z=0). Jeśli model z góry
+    wystaje poza podaną średnicę, podstawka rośnie do najbliższego standardowego rozmiaru."""
+    from shapely.geometry import Point
+    need = footprint_radius(mesh) * 2 / 0.92
+    d = float(diameter)
+    if need > d + 1e-6:
+        d = next((s for s in ROUND_BASES if s >= need), round(need))
+        log(f"Model nie mieści się na podstawce Ø{diameter:g} mm — używam Ø{d:g} mm")
+    b = mesh.bounds
+    cx, cy = (b[0, 0] + b[1, 0]) / 2, (b[0, 1] + b[1, 1]) / 2
+    z0 = b[0, 2]
+    # sfazowana krawędź jak w podstawkach do gier: dolny krążek pełny, górny węższy o bevel_mm
+    low = extrude(Point(cx, cy).buffer(d / 2, quad_segs=64), z0 - height_mm, z0 - bevel_mm)
+    top = trimesh.creation.cylinder(radius=d / 2, height=bevel_mm, sections=256)
+    top.vertices[top.vertices[:, 2] > 0, :2] = (top.vertices[top.vertices[:, 2] > 0, :2] * ((d / 2 - bevel_mm) / (d / 2)))
+    top.apply_translation([cx, cy, z0 - bevel_mm / 2])
+    lift = extrude(Point(cx, cy).buffer(d / 2 - bevel_mm, quad_segs=64), z0 - bevel_mm, z0 + 0.4)
+    out = union(low, top, lift, mesh)
+    log(f"Dodano okrągłą podstawkę Ø{d:g} × {height_mm:g} mm")
+    return out
+
+
 def add_pedestal(mesh, text="", height_mm=5.0, text_mm=7.0, emboss_mm=0.8, shape="rounded"):
     from shapely.geometry import box, Point
     b = mesh.bounds

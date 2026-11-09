@@ -28,8 +28,9 @@ DEFAULTS = dict(
     # litofan
     litho="flat", min_mm=0.8, max_mm=3.0, arc_deg=120.0, litho_base_mm=2.0, litho_rim_mm=3.0,
     # 3D
-    height_mm=33.0, mc_res=256, mc_threshold=25.0, fg_ratio=0.85, triposr_dir=None, debug_dir=None,
-    smooth_iters=5, base_cut_mm=0.0, pedestal=False, pedestal_text="", pedestal_mm=5.0,
+    height_mm=0.0, mc_res=256, mc_threshold=25.0, fg_ratio=0.85, triposr_dir=None, debug_dir=None,
+    smooth_iters=5, base_cut_mm=0.0, round_base_mm=32.0, round_base_h_mm=3.5,
+    pedestal=False, pedestal_text="", pedestal_mm=5.0,
     hollow_mm=0.0, drain_mm=0.0, auto_orient=False, overhang_deg=45.0,
     split=False, bed_x=220.0, bed_y=220.0, bed_z=250.0, pin_d=4.0, pin_len=10.0,
     text_generator="flux",
@@ -105,16 +106,32 @@ def prep_3d(mesh, o):
         transfer_colors(mesh, color_src)
         color_src = mesh.copy()
     pp.rotate(mesh, xf, o["rotate_x"], o["rotate_y"], o["rotate_z"])
-    pp.scale_to(mesh, xf, height_mm=o["height_mm"])
+    rect = bool(o["pedestal"] or o["pedestal_text"])          # prostokątna podstawka (np. z napisem)
+    round_d = 0.0 if rect else float(o["round_base_mm"] or 0)  # okrągła podstawka modelarska
+    height = float(o["height_mm"] or 0)                        # 0 = dopasuj do podstawki
+    if height:
+        pp.scale_to(mesh, xf, height_mm=height)
+    elif round_d:
+        pp.fit_to_round_base(mesh, xf, round_d)
+    else:
+        height = 80.0
+        pp.scale_to(mesh, xf, height_mm=height)
     if o["base_cut_mm"] > 0:
-        mesh = pp.scale_to(pp.flat_base(mesh, o["base_cut_mm"]), xf, height_mm=o["height_mm"])
+        mesh = pp.flat_base(mesh, o["base_cut_mm"])
+        if height:
+            mesh = pp.scale_to(mesh, xf, height_mm=height)
     pp.place_on_bed(mesh, xf)
-    if o["pedestal"] or o["pedestal_text"]:
+    if rect:
         mesh = pp.add_pedestal(mesh, o["pedestal_text"], o["pedestal_mm"])
+    elif round_d:
+        mesh = pp.add_round_base(mesh, round_d, o["round_base_h_mm"])
     if o["hollow_mm"] > 0:
         mesh = pp.hollow(mesh, o["hollow_mm"], o["drain_mm"])
     if o["auto_orient"]:
-        pp.auto_orient(mesh, xf, o["overhang_deg"])
+        if rect or round_d:
+            log("Auto-orientacja pominięta: model stoi na podstawce (wyłącz ją: --round-base-mm 0)")
+        else:
+            pp.auto_orient(mesh, xf, o["overhang_deg"])
     mesh = pp.decimate(mesh, o["target_faces"])
     pp.place_on_bed(mesh, xf)
     if color_src is not None:
