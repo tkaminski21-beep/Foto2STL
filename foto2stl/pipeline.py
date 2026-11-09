@@ -28,7 +28,7 @@ DEFAULTS = dict(
     # litofan
     litho="flat", min_mm=0.8, max_mm=3.0, arc_deg=120.0, litho_base_mm=2.0, litho_rim_mm=3.0,
     # 3D
-    height_mm=80.0, mc_res=256, mc_threshold=25.0, fg_ratio=0.85, triposr_dir=None, debug_dir=None,
+    height_mm=33.0, mc_res=256, mc_threshold=25.0, fg_ratio=0.85, triposr_dir=None, debug_dir=None,
     smooth_iters=5, base_cut_mm=0.0, pedestal=False, pedestal_text="", pedestal_mm=5.0,
     hollow_mm=0.0, drain_mm=0.0, auto_orient=False, overhang_deg=45.0,
     split=False, bed_x=220.0, bed_y=220.0, bed_z=250.0, pin_d=4.0, pin_len=10.0,

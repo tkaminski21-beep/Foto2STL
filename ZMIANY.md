@@ -26,3 +26,6 @@
 
 ## GUI / serwer
 - Opcje z wiersza poleceń (`--engine`, `--hf-token`, `--mqtt`, `--depth-model`, `--rembg-model`…) obowiązują teraz też w GUI (wcześniej tylko w REST i katalogu obserwowanym); ustawienia z interfejsu mają pierwszeństwo.
+
+## Domyślna skala
+- Domyślna wysokość modeli 3D (`--height-mm`, suwak w GUI) to teraz **33 mm** — standardowa skala modelarska (wcześniej 80 mm).

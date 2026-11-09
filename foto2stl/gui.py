@@ -77,7 +77,7 @@ def build_ui(base_opts=None):
 
                 with gr.Accordion("Rozmiar i kształt", open=True):
                     S["width_mm"] = gr.Slider(10, 300, 100, step=1, label="Szerokość – tryby płaskie / obwód cylindra [mm]")
-                    S["height_mm"] = gr.Slider(10, 400, 80, step=1, label="Wysokość modelu 3D [mm]")
+                    S["height_mm"] = gr.Slider(10, 400, 33, step=1, label="Wysokość modelu 3D [mm] (33 = skala modelarska)")
                     S["shape"] = gr.Dropdown(SHAPES, value="rect", label="Kształt płaskorzeźby / litofanu")
                     with gr.Row():
                         S["relief_mm"] = gr.Slider(0.5, 30, 6, step=0.5, label="Głębokość reliefu [mm]")
